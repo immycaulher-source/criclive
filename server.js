@@ -123,10 +123,24 @@ const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'i
 const imgs = new Map();
 const json = (res, code, d) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(d)); };
 
+// --- SEO helpers: gzip, robots.txt, sitemap.xml, absolute site URL injected into index.html ---
+const zlib = require('zlib');
+const siteUrl = () => (process.env.SITE_URL || ('http://localhost:' + PORT)).trim().replace(/\/+$/, '');
+function sendText(req, res, type, body, cache) {
+  const h = { 'Content-Type': type, 'Cache-Control': cache || 'no-cache', Vary: 'Accept-Encoding' };
+  if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { h['Content-Encoding'] = 'gzip'; res.writeHead(200, h); return res.end(zlib.gzipSync(body)); }
+  res.writeHead(200, h); res.end(body);
+}
+
 http.createServer(async (req, res) => {
   const u = req.url.split('?')[0]; let m;
   try {
-    if (u === '/') return fs.createReadStream(path.join(__dirname, 'index.html')).on('error', () => json(res, 404, { error: 'index.html not found' })).pipe(res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }) && res);
+    if (u === '/') {
+      let h; try { h = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'); } catch { return json(res, 404, { error: 'index.html not found' }); }
+      return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
+    }
+    if (u === '/robots.txt') return sendText(req, res, 'text/plain; charset=utf-8', 'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ' + siteUrl() + '/sitemap.xml\n', 'public, max-age=86400');
+    if (u === '/sitemap.xml') return sendText(req, res, 'application/xml; charset=utf-8', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl() + '/</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>hourly</changefreq><priority>1.0</priority></url></urlset>\n', 'public, max-age=3600');
     if (u === '/api/live') return json(res, 200, await getLive());
     if (u === '/api/upcoming') return json(res, 200, await getUpcoming());
     if (u === '/api/recent') return json(res, 200, await getRecent());
@@ -154,7 +168,7 @@ http.createServer(async (req, res) => {
     // only image files sitting next to server.js are served (so .env is never exposed)
     if ((m = u.match(/^\/([\w.\- ]+)\.(jpg|jpeg|png|webp|svg|ico)$/i))) {
       const f = path.join(__dirname, m[1] + '.' + m[2]);
-      if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': MIME[m[2].toLowerCase()] }); return fs.createReadStream(f).pipe(res); }
+      if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': MIME[m[2].toLowerCase()], 'Cache-Control': 'public, max-age=604800' }); return fs.createReadStream(f).pipe(res); }
     }
     json(res, 404, { error: 'Not found' });
   } catch (e) { console.error(u, e.message); if (!res.headersSent) json(res, 502, { error: e.message }); }
