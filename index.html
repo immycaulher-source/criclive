@@ -177,7 +177,10 @@ h2{color:var(--mar);font-size:24px;margin:28px 0 14px 0;text-transform:uppercase
     <div class="nav">
       <button class="btn" id="bf">Results and Fixtures</button>
       <button class="btn" id="bp">Points Table</button>
-      <button class="btn" id="bn">Teams News</button>
+      
+      <button class="btn" id="bc">Live Streams</button>
+      <a class="btn" id="bs" href="https://events.khalti.com/" target="_blank" rel="noopener">Tickets</a>
+      <button class="btn" id="bn">News</button>
     </div>
   </div>
 </div>
@@ -324,11 +327,20 @@ function rScard(d){var a=d.scoreCard||[];if(!a.length)return '<p>Scorecard not a
  +tbl(['Batter','R','B','4s','6s','SR'],vals(b.batsmenData).map(function(p){return [p.batName+(p.outDesc?' — '+p.outDesc:''),p.runs,p.balls,p.fours,p.sixes,p.strikeRate]}))
  +tbl(['Bowler','O','M','R','W','Econ'],vals(w.bowlersData).map(function(p){return [p.bowlName,p.overs,p.maidens,p.runs,p.wickets,p.economy]}))}).join('')}
 function rComm(d){var a=d.commentaryList||[];return a.length?a.map(function(c){return '<p>'+(c.overNumber?'<b>'+esc(c.overNumber)+'</b> ':'')+esc(String(c.commText||'').replace(/B\d+\$/g,''))+'</p>'}).join(''):'<p>Commentary not available yet.</p>'}
-function rPts(d){var g=d.pointsTable||[];return g.length?g.map(function(x){return '<h3>'+esc(x.groupName||'Points Table')+'</h3>'+tbl(['Team','P','W','L','NR','Pts','NRR'],(x.pointsTableInfo||[]).map(function(t){return [t.teamName,t.matchesPlayed,t.matchesWon,t.matchesLost,t.noRes,t.points,t.nrr]}))}).join(''):'<p>No points table for this series.</p>'}
+function rPts(d){var g=d.pointsTable||[];return g.length?g.map(function(x){return '<h3>'+esc(x.groupName||'Points Table')+'</h3>'+tbl(['Team','P','W','L','NR','Pts','NRR'],(x.pointsTableInfo||[]).map(function(t){return [t.teamName,t.matchesPlayed,t.matchesWon,t.matchesLost,t.noRes,t.points,t.nrr]}))}).join(''):'<p>Points Table not available yet</p>'}
 function show(p,r,t){open('<h3>'+t+'</h3><p>Loading…</p>');api(p).then(function(d){open('<h3>'+t+'</h3>'+r(d))}).catch(function(){open('<h3>'+t+'</h3><p>Could not load. Try again shortly.</p>')})}
 document.querySelectorAll('[data-k]').forEach(function(b){b.onclick=function(){var c=$(b.dataset.c),s=c.children[Math.round(c.scrollLeft/c.clientWidth)],id=s&&s.dataset.id;if(!id)return;show(b.dataset.k+'/'+id,b.dataset.k=='scorecard'?rScard:rComm,b.textContent)}});
-$('bp').onclick=function(){sid?show('points/'+sid,rPts,'Points Table'):open('<p>No series available.</p>')};
+$('bp').onclick=function(){sid?show('points/'+sid,rPts,'Points Table'):open('<p>League not started yet.</p>')};
 $('bn').onclick=function(){$('mc').scrollIntoView({behavior:'smooth'})};
+
+/* Tickets button is a normal link (see #bs in the nav) */
+
+/* Live Streams button: where to watch */
+$('bc').onclick=function(){
+  var c='style="text-align:left;white-space:normal;padding:10px 12px"';
+  var rows=[['Nepal','Star Sports Nepal','DishHome Go, Star Sports App'],['India','Star Sports Select 1 (HD)','FanCode'],['Other countries','To Be Announced','Waiting For Official Announcements']];
+  open('<h3>Live Streams</h3><table style="display:table;width:100%"><tr>'+['Country','TV Channel','Live Streaming'].map(function(h){return '<th '+c+'>'+h+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(x,i){return '<td '+c+'>'+(i?'':'<b>')+esc(x)+(i?'':'</b>')+'</td>'}).join('')+'</tr>'}).join('')+'</table>');
+};
 
 /* Updated Results and Fixtures Click Handler to keep API calls active but render ONLY the image */
 $('bf').onclick=function(){
