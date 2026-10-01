@@ -139,6 +139,7 @@ http.createServer(async (req, res) => {
       let h; try { h = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'); } catch { return json(res, 404, { error: 'index.html not found' }); }
       return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
     }
+    if (u === '/ads.txt') return sendText(req, res, 'text/plain; charset=utf-8', 'google.com, pub-4118893256323280, DIRECT, f08c47fec0942fa0\n', 'public, max-age=86400');
     if (u === '/robots.txt') return sendText(req, res, 'text/plain; charset=utf-8', 'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ' + siteUrl() + '/sitemap.xml\n', 'public, max-age=86400');
     if (u === '/sitemap.xml') return sendText(req, res, 'application/xml; charset=utf-8', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl() + '/</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>hourly</changefreq><priority>1.0</priority></url></urlset>\n', 'public, max-age=3600');
     if (u === '/api/live') return json(res, 200, await getLive());
