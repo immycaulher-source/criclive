@@ -125,6 +125,9 @@ const json = (res, code, d) => { res.writeHead(code, { 'Content-Type': 'applicat
 
 // --- SEO helpers: gzip, robots.txt, sitemap.xml, absolute site URL injected into index.html ---
 const zlib = require('zlib');
+// Folder layout: pages/ = HTML pages, public/images/ = images, public/ads.txt = AdSense file
+const PAGES = path.join(__dirname, 'pages'), IMAGES = path.join(__dirname, 'public', 'images');
+const adsTxt = () => { try { return fs.readFileSync(path.join(__dirname, 'public', 'ads.txt'), 'utf8'); } catch { return 'google.com, pub-4118893256323280, DIRECT, f08c47fec0942fa0\n'; } };
 const siteUrl = () => (process.env.SITE_URL || ('http://localhost:' + PORT)).trim().replace(/\/+$/, '');
 function sendText(req, res, type, body, cache) {
   const h = { 'Content-Type': type, 'Cache-Control': cache || 'no-cache', Vary: 'Accept-Encoding' };
@@ -135,25 +138,29 @@ function sendText(req, res, type, body, cache) {
 http.createServer(async (req, res) => {
   const u = req.url.split('?')[0]; let m;
   try {
+    if (u === '/points-table' || u === '/points-table.html') {
+      let h; try { h = fs.readFileSync(path.join(PAGES, 'points-table.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
+      return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
+    }
     if (u === '/fixtures' || u === '/fixtures.html') {
-      let h; try { h = fs.readFileSync(path.join(__dirname, 'fixtures.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
+      let h; try { h = fs.readFileSync(path.join(PAGES, 'fixtures.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
       return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
     }
     if (u === '/tickets' || u === '/tickets.html') {
-      let h; try { h = fs.readFileSync(path.join(__dirname, 'tickets.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
+      let h; try { h = fs.readFileSync(path.join(PAGES, 'tickets.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
       return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
     }
     if (u === '/live-streams' || u === '/live-streams.html') {
-      let h; try { h = fs.readFileSync(path.join(__dirname, 'live-streams.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
+      let h; try { h = fs.readFileSync(path.join(PAGES, 'live-streams.html'), 'utf8'); } catch { return json(res, 404, { error: 'page not found' }); }
       return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
     }
     if (u === '/') {
-      let h; try { h = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'); } catch { return json(res, 404, { error: 'index.html not found' }); }
+      let h; try { h = fs.readFileSync(path.join(PAGES, 'index.html'), 'utf8'); } catch { return json(res, 404, { error: 'index.html not found' }); }
       return sendText(req, res, 'text/html; charset=utf-8', h.replace(/\{\{SITE_URL\}\}/g, siteUrl()), 'no-cache');
     }
-    if (u === '/ads.txt') return sendText(req, res, 'text/plain; charset=utf-8', 'google.com, pub-4118893256323280, DIRECT, f08c47fec0942fa0\n', 'public, max-age=86400');
+    if (u === '/ads.txt') return sendText(req, res, 'text/plain; charset=utf-8', adsTxt(), 'public, max-age=86400');
     if (u === '/robots.txt') return sendText(req, res, 'text/plain; charset=utf-8', 'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ' + siteUrl() + '/sitemap.xml\n', 'public, max-age=86400');
-    if (u === '/sitemap.xml') return sendText(req, res, 'application/xml; charset=utf-8', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl() + '/</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>hourly</changefreq><priority>1.0</priority></url><url><loc>' + siteUrl() + '/live-streams</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url><url><loc>' + siteUrl() + '/tickets</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url><url><loc>' + siteUrl() + '/fixtures</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url></urlset>\n', 'public, max-age=3600');
+    if (u === '/sitemap.xml') return sendText(req, res, 'application/xml; charset=utf-8', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl() + '/</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>hourly</changefreq><priority>1.0</priority></url><url><loc>' + siteUrl() + '/live-streams</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url><url><loc>' + siteUrl() + '/tickets</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url><url><loc>' + siteUrl() + '/fixtures</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url><url><loc>' + siteUrl() + '/points-table</loc><lastmod>' + new Date().toISOString().slice(0, 10) + '</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url></urlset>\n', 'public, max-age=3600');
     if (u === '/api/live') return json(res, 200, await getLive());
     if (u === '/api/upcoming') return json(res, 200, await getUpcoming());
     if (u === '/api/recent') return json(res, 200, await getRecent());
@@ -178,9 +185,9 @@ http.createServer(async (req, res) => {
       }
       res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }); return res.end(b);
     }
-    // only image files sitting next to server.js are served (so .env is never exposed)
+    // only image files inside public/images are served (so .env and source files are never exposed)
     if ((m = u.match(/^\/([\w.\- ]+)\.(jpg|jpeg|png|webp|svg|ico)$/i))) {
-      const f = path.join(__dirname, m[1] + '.' + m[2]);
+      const f = path.join(IMAGES, m[1] + '.' + m[2]);
       if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': MIME[m[2].toLowerCase()], 'Cache-Control': 'public, max-age=604800' }); return fs.createReadStream(f).pipe(res); }
     }
     json(res, 404, { error: 'Not found' });
