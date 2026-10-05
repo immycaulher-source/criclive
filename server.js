@@ -186,7 +186,11 @@ http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }); return res.end(b);
     }
     // only image files inside public/images are served (so .env and source files are never exposed)
-    if ((m = u.match(/^\/([\w.\- ]+)\.(jpg|jpeg|png|webp|svg|ico)$/i))) {
+    if (u === '/favicon.ico') {
+      const f = path.join(IMAGES, 'favicon.png');
+      if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' }); return fs.createReadStream(f).pipe(res); }
+    }
+    if ((m = u.match(/^\/(?:images\/)?([\w.\- ]+)\.(jpg|jpeg|png|webp|svg|ico)$/i))) {
       const f = path.join(IMAGES, m[1] + '.' + m[2]);
       if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': MIME[m[2].toLowerCase()], 'Cache-Control': 'public, max-age=604800' }); return fs.createReadStream(f).pipe(res); }
     }
