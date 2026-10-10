@@ -39,11 +39,14 @@ CRIC/
 
 | Setting | What it does |
 |---|---|
-| `USE_CRICBUZZ` | `true` turns the Cricbuzz API on. Off by default (no API calls). |
+| `USE_CRICAPI` | On/off switch for CricAPI (cricketdata.org). `true` = on. If both switches are on, CricAPI wins. |
+| `CRICAPI_KEY` | Your cricketdata.org API key |
+| `CRICAPI_LIVE_MS`, `CRICAPI_DAILY_LIMIT`, `CRICAPI_SERIES_MAX` | Live refresh time (default 60000 ms), daily hit stop (free plan = 100/day), how many newest matching series to load |
+| `USE_CRICBUZZ` | On/off switch for Cricbuzz via RapidAPI. Ignored while `USE_CRICAPI=true`. |
 | `RAPIDAPI_KEY`, `RAPIDAPI_HOST` | API credentials (only used when `USE_CRICBUZZ=true`) |
 | `SITE_URL` | Your real domain, e.g. `https://example.com`. Used in canonical links, sitemap, robots.txt |
 | `PORT` | Server port (default 3000) |
-| `SERIES_FILTER` | Only show API matches whose series name contains this text |
+| `SERIES_FILTER` | Comma-separated words, e.g. `Nepal Premier League,NPL`. Only matching series are shown (both sources). Empty = no filter. |
 | `LIVE_MS`, `LIST_MS`, `NEWS_MS`, `RSS_MS` | Cache times in milliseconds |
 
 ## Where to edit things
