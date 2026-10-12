@@ -640,6 +640,9 @@
   .site-footer a:hover,.site-footer a:focus-visible{color:#ffd700;text-decoration:underline}
   .ft-bar{background:#4f1e1e;text-align:center;padding:14px 16px;font-size:13px;color:#e8cfcf}
   @media(max-width:820px){.ft-grid{grid-template-columns:1fr;padding:28px 16px 16px;gap:24px}}
+  /* Live card: half width (full width on phones) */
+  .two[data-tab=live] #live-box,.two[data-tab=live] #live-empty{width:50%}
+  @media(max-width:820px){.two[data-tab=live] #live-box,.two[data-tab=live] #live-empty{width:100%}}
 </style></head><body>
 
 
@@ -839,9 +842,9 @@ slider($('ar'),null,function(){var a=$('ar').children[0];return a?a.offsetWidth+
 /* modal */
 function open(h){$('mb').innerHTML='<button class="x" onclick="$(\'md\').classList.remove(\'on\')">Close</button>'+h;$('md').classList.add('on')}
 $('md').onclick=function(e){if(e.target==this)this.classList.remove('on')};
-function tbl(h,rows){return '<table><tr>'+h.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(x){return '<td>'+esc(x)+'</td>'}).join('')+'</tr>'}).join('')+'</table>'}
+function tbl(h,rows){if(!rows.length)return '';return '<table><tr>'+h.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(x){return '<td>'+esc(x)+'</td>'}).join('')+'</tr>'}).join('')+'</table>'}
 function vals(o){return Object.keys(o||{}).map(function(k){return o[k]})}
-function rScard(d){var a=d.scoreCard||[];if(!a.length)return '<p>Scorecard not available yet.</p>';return a.map(function(x){var b=x.batTeamDetails||{},w=x.bowlTeamDetails||{},s=x.scoreDetails||{};
+function rScard(d){var a=d.scoreCard||[];if(!a.length)return '<p>Scorecard not available yet.'+(d.error?' <small>('+esc(d.error)+')</small>':'')+'</p>';return (d.note?'<p><small>'+esc(d.note)+'</small></p>':'')+a.map(function(x){var b=x.batTeamDetails||{},w=x.bowlTeamDetails||{},s=x.scoreDetails||{};
  return '<h3>'+esc(b.batTeamName)+' '+esc(s.runs)+'/'+esc(s.wickets)+' ('+esc(s.overs)+')</h3>'
  +tbl(['Batter','R','B','4s','6s','SR'],vals(b.batsmenData).map(function(p){return [p.batName+(p.outDesc?' — '+p.outDesc:''),p.runs,p.balls,p.fours,p.sixes,p.strikeRate]}))
  +tbl(['Bowler','O','M','R','W','Econ'],vals(w.bowlersData).map(function(p){return [p.bowlName,p.overs,p.maidens,p.runs,p.wickets,p.economy]}))}).join('')}
@@ -850,6 +853,7 @@ function rPts(d){var g=d.pointsTable||[];return g.length?g.map(function(x){retur
 function show(p,r,t){open('<h3>'+t+'</h3><p>Loading…</p>');api(p).then(function(d){open('<h3>'+t+'</h3>'+r(d))}).catch(function(){open('<h3>'+t+'</h3><p>Could not load. Try again shortly.</p>')})}
 document.querySelectorAll('[data-k]').forEach(function(b){b.onclick=function(){var c=$(b.dataset.c),s=c.children[Math.round(c.scrollLeft/c.clientWidth)],id=s&&s.dataset.id;if(!id)return;show(b.dataset.k+'/'+id,b.dataset.k=='scorecard'?rScard:rComm,b.textContent)}});
 $('bp').onclick=function(){location.href='/points-table'};
+$('bt').onclick=function(){location.href='/prediction'};
 if($('bn'))$('bn').onclick=function(){$('mc').scrollIntoView({behavior:'smooth'})};
 
 /* NPL 2026 points table (no API). Edit [team, won, lost, no result, NRR] as results come in.

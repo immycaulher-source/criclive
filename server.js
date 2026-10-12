@@ -268,7 +268,32 @@ function sendText(req, res, type, body, cache) {
   res.writeHead(200, h); res.end(body);
 }
 
+// --- Security headers: Strict-Transport-Security, Content-Security-Policy, Referrer-Policy, X-Content-Type-Options, X-Frame-Options ---
+// The CSP allows Google AdSense and Google Analytics (script/frames/connections). If an ad or tag ever stops working,
+// set CSP_REPORT_ONLY=true in .env to log violations in the browser console instead of blocking, then add the missing domain below.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com https://adservice.google.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:", // https: because RSS article images come from other sites
+  "font-src 'self' data:",
+  "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google",
+  "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.safeframe.googlesyndication.com https://pagead2.googlesyndication.com https://www.google.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'"
+].join('; ');
+function securityHeaders(res) {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000'); // browsers only honour this over HTTPS
+  res.setHeader(process.env.CSP_REPORT_ONLY === 'true' ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy', CSP);
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+}
+
 http.createServer(async (req, res) => {
+  securityHeaders(res);
   const u = req.url.split('?')[0]; let m;
   try {
     if (u === '/prediction' || u === '/prediction.html') {
